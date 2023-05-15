@@ -5,7 +5,7 @@ Silver dataset creation project using Wikiann data for Named Entity Recognition 
 ### Step-by-step Instruction
 
 ```
-Example:
+# Example:
 src_lang=ca
 tgt_lang=es
 trans_dir=[path/to/translation/directory]
@@ -41,3 +41,4 @@ trans_dir=[path/to/translation/directory]
         --silver_dir ${trans_dir}
     ```
 
+(All data and models are stored on the clsp grid: /export/c11/sli136/silver-dataset/)
