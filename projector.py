@@ -46,7 +46,7 @@ def read_segmented(filename, tgt_lang) -> "Dataset":
 def read_segmented_filter(filename, src_lang, tgt_lang) -> Tuple[dict, float]:
     silver_dict = defaultdict(list)
     total, good = 0,0
-    print("reading file:", filename)
+    # print("projector.py line 49 reading file:", filename)
     with open(filename, 'r') as f:
         for line in f.readlines():
             total += 1

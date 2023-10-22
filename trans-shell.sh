@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #$ -wd /home/sli136/silver-data-creation
 #$ -V
-#$ -N trans-ar
+#$ -N trans-de
 #$ -j y -o $JOB_NAME-$JOB_ID.out
 #$ -M sli136@jhu.edu
 #$ -m e
@@ -52,7 +52,8 @@ tgt=${2}
 # sim_langs=zh-yue,zh-classical,zh-min-nan,ja,bo
 
 splits=train,test,validation
-phrase=.phrase  # if token level masking, phrase=''
+phrase=.phrase  # if token level masking, 
+phrase=''
 
 for split in ${splits//,/ }; do
     echo running ${split} translation for ${src}-${tgt}
@@ -64,8 +65,9 @@ for split in ${splits//,/ }; do
 
     [ ! -d ${trans_dir} ] && mkdir -p ${trans_dir}
     if [ -f ${trans_file} ]; then
-        echo "${trans_file} exists, skipping"
-        continue
+        echo "${trans_file} exists, removing"
+        rm ${trans_file}
+        # continue
     fi
 
     mkdir -p ${trans_dir}

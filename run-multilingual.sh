@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #$ -wd /home/sli136/silver-data-creation/
-#$ -N ar-exp21-ph
+#$ -N multi-exp15
 #$ -j y -o $JOB_NAME-$JOB_ID.out
 #$ -M sli136@jhu.edu
 #$ -m e
 #$ -l ram_free=10G,mem_free=10G,gpu=1,hostname=c1*|c2*
 #$ -q g.q
 #$ -t 1
-#$ -o /home/sli136/silver-data-creation/job-output/repeat_runs_all/new/ar/
+#$ -o /home/sli136/silver-data-creation/job-output/phrase/multilingual/
 
 source /home/sli136/scripts/acquire_gpu
 
@@ -16,14 +16,9 @@ conda activate l2mt
 cd /home/sli136/silver-data-creation/
 
 necessary_langs='en,ar,de,es,fr,hi,ru,vi,zh'
-stage2_silver_size=-1
 
-seg_level=${1}
-tgt=${2}
-exp_num=${3}
-
-echo ""
-echo "command line input: ${seg_level} ${tgt} ${exp_num}"
+tgt=${1}
+exp_num=${2}
 
 # tgt=ar
 if [ ${tgt} == "ar" ]; then
@@ -127,16 +122,6 @@ fi
 if [ ${exp_num} == "18" ]; then
     inputs=18:${same_script}:${same_script}:${sim_langs}
 fi
-if [ ${exp_num} == "19" ]; then
-    inputs=19:none:${same_script}:en
-fi
-if [ ${exp_num} == "20" ]; then
-    inputs=20:none:${same_script}:${sim_langs}
-    stage2_silver_size=20000
-fi
-if [ ${exp_num} == "21" ]; then
-    inputs=21:none:${necessary_langs}:en
-fi
 
 exp_num=$(echo ${inputs} | cut -d':' -f1)
 s1_oro_langs=$(echo ${inputs} | cut -d':' -f2)
@@ -162,54 +147,45 @@ if [ ${s1_oro_langs} == ${same_script} ]; then
     model_dir_s1_key="script"
 fi
 
-model_dir_s1=/export/c11/sli136/silver-dataset/models/${tgt}/s1-${model_dir_s1_key}
-if [ ${seg_level} == "t" ] || [ ${seg_level} == "token" ]; then
-    model_dir_s2=/export/c11/sli136/silver-dataset/models/${tgt}/${tgt}-exp${exp_num}
-    seg_level="token"
-fi
-if [ ${seg_level} == "p" ] || [ ${seg_level} == "phrase" ]; then
-    model_dir_s2=/export/c11/sli136/silver-dataset/models/${tgt}.phrase/${tgt}-exp${exp_num}
-    seg_level="phrase"
-fi
-# model_dir_s2=/export/c11/sli136/silver-dataset/models/${tgt}/${tgt}-exp${exp_num}
-[ ! -d ${model_dir_s1} ] && mkdir -p ${model_dir_s1}
-[ ! -d ${model_dir_s2} ] && mkdir -p ${model_dir_s2}
-
-echo running ${seg_level}-level fine-tune for ${tgt} - Exp \#${exp_num}
+echo running combined fine-tune for ${tgt} - Exp \#${exp_num}
 echo "inputs: ${inputs}"
 echo s1 oro langs: ${s1_oro_langs}
 echo s2 oro langs: ${s2_oro_langs}
 echo s2 silver langs: ${s2_silver_langs}
 echo model init dir: ${model_init_dir}
+model_dir_s1=/export/c11/sli136/silver-dataset/models/${tgt}/s1-${model_dir_s1_key}
+model_dir_s2=/export/c11/sli136/silver-dataset/models/${tgt}.phrase/${tgt}-exp${exp_num}
+[ ! -d ${model_dir_s1} ] && mkdir -p ${model_dir_s1}
+[ ! -d ${model_dir_s2} ] && mkdir -p ${model_dir_s2}
 
-echo "CUDA_LAUNCH_BLOCKING=1 python3 /home/sli136/silver-data-creation/run.py \
-    --seg_level ${seg_level} \
-    --batch_size 4 \
-    --stage1_oro_langs ${s1_oro_langs} --stage1_oro_size 20000 \
-    --stage2_oro_langs ${s2_oro_langs} --stage2_oro_size 20000 \
-    --stage2_silver_langs ${s2_silver_langs} --stage2_silver_size ${stage2_silver_size} \
-    --tgt_langs ${tgt} \
-    --eval_output test_results_exp${exp_num}.json \
-    --model_save_dir_s1 ${model_dir_s1} \
-    --model_save_dir_s2 ${model_dir_s2} \
-    --model_init_dir ${model_init_dir} \
-    --silver_dir /export/c11/sli136/silver-dataset/translations"
-    
-CUDA_LAUNCH_BLOCKING=1 python3 /home/sli136/silver-data-creation/run.py \
-    --seg_level ${seg_level} \
-    --batch_size 4 \
-    --stage1_oro_langs ${s1_oro_langs} --stage1_oro_size 20000 \
-    --stage2_oro_langs ${s2_oro_langs} --stage2_oro_size 20000 \
-    --stage2_silver_langs ${s2_silver_langs} --stage2_silver_size ${stage2_silver_size} \
-    --tgt_langs ${tgt} \
-    --eval_output test_results_exp${exp_num}.json \
-    --model_save_dir_s1 ${model_dir_s1} \
-    --model_save_dir_s2 ${model_dir_s2} \
-    --model_init_dir ${model_init_dir} \
-    --silver_dir /export/c11/sli136/silver-dataset/translations
+# CUDA_LAUNCH_BLOCKING=1 python3 /home/sli136/silver-data-creation/run.py \
+#     --batch_size 4 \
+#     --phrase \
+#     --stage1_oro_langs ${s1_oro_langs} --stage1_oro_size 20000 \
+#     --stage2_oro_langs ${s2_oro_langs} --stage2_oro_size 20000 \
+#     --stage2_silver_langs ${s2_silver_langs} --stage2_silver_size -1 \
+#     --tgt_langs ${tgt} \
+#     --eval_output test_results.json \
+#     --model_save_dir_s1 ${model_dir_s1} \
+#     --model_save_dir_s2 ${model_dir_s2} \
+#     --model_init_dir ${model_init_dir} \
+#     --silver_dir /export/c11/sli136/silver-dataset/translations
 
 # CUDA_LAUNCH_BLOCKING=1 python3 /home/sli136/silver-data-creation/run.py \
 #     --tgt_lang ${tgt} \
 #     --model_init_dir /export/c11/sli136/silver-dataset/models/de/de-exp12/checkpoint-47500 \
 #     --predict_only \
 #     --eval_output test_results.json 
+
+CUDA_LAUNCH_BLOCKING=1 python3 /home/sli136/silver-data-creation/run.py \
+    --batch_size 4 \
+    --phrase \
+    --stage1_oro_langs none --stage1_oro_size 10000 \
+    --stage2_oro_langs default --stage2_oro_size 10000 \
+    --stage2_silver_langs default --stage2_silver_size -1 \
+    --tgt_langs ${tgt} \
+    --eval_output test_results.json \
+    --model_save_dir_s1 ${model_dir_s1} \
+    --model_save_dir_s2 ${model_dir_s2} \
+    --model_init_dir ${model_init_dir} \
+    --silver_dir /export/c11/sli136/silver-dataset/translations

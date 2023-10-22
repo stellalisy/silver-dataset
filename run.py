@@ -6,16 +6,12 @@ from pathlib import Path
 
 from classifier import classifier_train
 from translator import translate, mark
+from constants import *
 
 os.environ["WANDB_DISABLED"] = "true"
 # os.environ["WANDB_API_KEY"]="a84285031fcd2e0955fd1d015249882145a057ff"
 # os.environ["WANDB_ENTITY"]="mark-translate"
 # os.environ["WANDB_PROJECT"]="translate"
-
-SRC_LANG='en'
-TGT_LANG='mg'
-CLASSIFICATION_MODEL = "xlm-roberta-base"  #"bert-base-multilingual-cased"
-TRANSLATION_MODEL = "facebook/m2m100_418M" # or use command line trans
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -39,16 +35,10 @@ def parse_args() -> argparse.Namespace:
         "--stage2_silver_langs", type=str, default="",
         help="translated data used in stage 2 fine-tuning"
     )
-    parser.add_argument(
-        "-s",
-        "--src_lang",
-        type=str,
-        default=SRC_LANG,
-        help="source language"
-    )
+    # parser.add_argument("-s", "--src_lang", type=str, default=SRC_LANG, help="source language")   # new change 8/19/2023
     parser.add_argument(
         "-t",
-        "--tgt_lang",
+        "--tgt_langs",
         type=str,
         default=TGT_LANG,
         help="target language"
@@ -64,6 +54,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--stage2_silver_size", type=int, default=-1,
         help="translated data used in stage 2 fine-tuning"
+    )
+    parser.add_argument(
+        "--stage3_gold_size", type=int, default=0,
+        help="few shot fine-tuning on gold data"
     )
     parser.add_argument(
         "-eo",
@@ -85,6 +79,13 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default="/export/c11/sli136/silver-dataset/model",
         help="model save directory for stage 2 training"
+    )
+    parser.add_argument(
+        "-md3",
+        "--model_save_dir_s3",
+        type=str,
+        default=None,
+        help="model save directory for stage 3 training"
     )
     parser.add_argument(
         "-mi",
@@ -130,10 +131,9 @@ def parse_args() -> argparse.Namespace:
         help="only mark the source language data"
     )
     parser.add_argument(
-        "--phrase",
-        action=argparse.BooleanOptionalAction,
-        type=bool,
-        default=False,
+        "--seg_level",
+        type=str,
+        default="token",   # or phrase
         help="only mark the source language data"
     )
     parser.add_argument(
@@ -169,9 +169,12 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 args = parse_args()
+args.tgt_langs = args.tgt_langs.replace(' ', '').split(',')
 if args.stage1_oro_langs == "none": args.stage1_oro_langs = ""
 if args.stage2_oro_langs == "none": args.stage2_oro_langs = ""
 if args.stage2_silver_langs == "none": args.stage2_silver_langs = ""
+if args.model_save_dir_s3 == None: args.model_save_dir_s3 = os.path.join(args.model_save_dir_s2, 'gold')
+args.phrase = True if args.seg_level == "phrase" else False
 
 for k, v in vars(args).items():
     print(f'[{time.strftime("%Y-%m-%d %H:%M:%S")}] {k}: {v}')

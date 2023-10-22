@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #$ -wd /home/sli136/silver-data-creation/
-#$ -N es-exp8
+#$ -N zh-exp20
 #$ -j y -o $JOB_NAME-$JOB_ID.out
 #$ -M sli136@jhu.edu
 #$ -m e
-#$ -l ram_free=20G,mem_free=10G,gpu=1,hostname=octopod|c*
+#$ -l ram_free=10G,mem_free=10G,gpu=1,hostname=c1*|c2*
 #$ -q g.q
 #$ -t 1
-#$ -o /home/sli136/silver-data-creation/job-output/phrase/es/
+#$ -o /home/sli136/silver-data-creation/job-output/phrase/zh/
 
 source /home/sli136/scripts/acquire_gpu
 
@@ -122,6 +122,9 @@ fi
 if [ ${exp_num} == "18" ]; then
     inputs=18:${same_script}:${same_script}:${sim_langs}
 fi
+if [ ${exp_num} == "20" ]; then
+    inputs=20:none:${same_script}:en
+fi
 
 exp_num=$(echo ${inputs} | cut -d':' -f1)
 s1_oro_langs=$(echo ${inputs} | cut -d':' -f2)
@@ -164,7 +167,7 @@ CUDA_LAUNCH_BLOCKING=1 python3 /home/sli136/silver-data-creation/run.py \
     --stage1_oro_langs ${s1_oro_langs} --stage1_oro_size 20000 \
     --stage2_oro_langs ${s2_oro_langs} --stage2_oro_size 20000 \
     --stage2_silver_langs ${s2_silver_langs} --stage2_silver_size -1 \
-    --tgt_lang ${tgt} \
+    --tgt_langs ${tgt} \
     --eval_output test_results.json \
     --model_save_dir_s1 ${model_dir_s1} \
     --model_save_dir_s2 ${model_dir_s2} \
